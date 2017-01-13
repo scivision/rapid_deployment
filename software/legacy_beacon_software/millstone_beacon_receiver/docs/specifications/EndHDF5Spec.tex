@@ -1,0 +1,141 @@
+% EndHDF5Spec.tex is a LaTeX file that defines the structure
+% of the output of the final processing stage of the 
+% MIDAS-M beacon receiver.
+%
+% $Id: EndHDF5Spec.tex 141 2007-08-10 17:56:39Z hguturu $
+
+\documentclass[12pt]{article}
+\begin{document}
+\begin{center}
+\Large{Beacon Receiver End HDF5 Output File}\\
+\large{(Fourth File, Stage D)}\\
+\large{Damian Ancukiewicz, Harendra Guturu}\\
+\large{Aug 05, 2007}
+\end{center}
+
+\begin{small}
+\paragraph{Description}
+This document specifies the format of the file that the receiver outputs after a satellite flyby once all stages of processing are done. This file is used by a loader program to import some of its elements into the Madrigal database. Additionally, it is stored so that it can be accessed by a separate user interface for scientific or debugging purposes.
+\paragraph{Definitions}
+These dimensions are determined by the data and metadata contained inside the HDF5 file and are not hard-coded.\\
+
+\begin{tabular}{l c p{10cm}}
+$N_{freq}$ &-& Number of distinct frequencies (ex.~VHF, UHF, L-band) that are processed from the same satellite \\
+$N_{samp}$ &-& Number of complex voltage samples present\\
+$N_{out}$ &-& Number of output frequency points and their corresponding snr, lock, deviation and error points present\\
+$N_{s4}$ &-& Number of $S_4$ points present\\
+$N_{\sigma \phi}$ &-& Number of $\sigma _\phi$ points present\\
+$N_{tec}$ &-& Number of TEC points present\\
+\end{tabular}
+
+\paragraph{Structure}
+The file is divided into directories, which contain arrays of various types and dimensions. 
+
+\paragraph{Metadata}- contains all necessary metadata for the pass.\\
+\begin{scriptsize}
+\begin{tabular}{|l|l|l|c|p{7cm}|}
+\hline
+\textbf{Name} & \textbf{Size} & \textbf{Type} & \textbf{Units} & \textbf{Description} \\
+\hline
+
+Fsat & $(N_{freq})$ & Float64 & Hz & Defined frequencies of each beacon (disregarding Doppler shift)\\
+Bandwidth & ($N_{freq}$) & Float64 & Hz & Bandwidth of each received signal\\
+StartUTC & 1 & String & & Nanosecond-resolution start time of pass (format: \mbox{YYYYMMDDThhmmss.sssssssssZ} according to ISO 8601) \\
+SampInterval & 1 & Int32 & ns & Sampling interval of voltage signal\\
+OutInterval & 1 & Int32 & ns & Measurement interval of signal-to-noise ratio, frequency values, their deviation, error and lock. Must be an integral multiple of SampInterval.\\
+S4Interval & 1 & Int32 & ns & Measurement interval of $S_4$. Must be an integral multiple of SampInterval.\\
+SigmaPhiInterval & 1 & Int32 & ns & Measurement interval of $\sigma _\phi$. Must be an integral multiple of SampInterval.\\
+TECInterval & 1 & Int32 & ns & Measurement interval of TEC. Must be an integral multiple of SampInterval.\\
+TLE & 3 & String & & Name of satellite and both lines of the TLE used to find its ephemeris\\
+\hline
+\end{tabular}
+\end{scriptsize}
+
+\paragraph{Data}- mid-level voltage, frequency and SNR data for the acquired signal on each frequency. \\
+\begin{scriptsize}
+\begin{tabular}{|l|l|l|c|p{7cm}|}
+\hline
+\textbf{Name} & \textbf{Size} & \textbf{Type} & \textbf{Units} & \textbf{Description} \\
+\hline
+
+Voltage & $(N_{freq}) \times (N_{samp})$ & Complex128 & V & In-phase and quadrature components of voltage for each frequency. If a sample is unavailable at a given time, it is denoted as NaN.\\
+SNR & $(N_{freq}) \times (N_{out})$ & Float64 & dB & Signal-to-noise ratio for each frequency. Denoted as NaN if unavailable.\\
+Frequency & $(N_{freq}) \times (N_{out})$ & Float64 & Hz & Actual frequency at which the signal was found at. Denoted as NaN if unavailabe.\\
+Lock & $(N_{freq}) \times (N_{out})$ & Bool & T/F & Each sample value for each frequency will have a value that will be a true or false indicating if the signal had lock. If data
+frequency data is unavailable then the lock value will default to false.\\
+Deviation & $(N_{freq}) \times (N_{out})$ & Float64 & Hz & The deviation from the detected frequency and the frequency from the ephem calculator. If it is too high, lock is lost.
+Denoted as NaN if unavailable.\\
+Error & $(N_{freq}) \times (N_{out})$ & Float64 & Hz & The error of the frequency due to error propagation in the function. Error = $\frac{dy}{dx}\Delta{x}$. Denoted by NaN if
+unavailable.\\
+\hline
+\end{tabular}
+\end{scriptsize}
+
+\paragraph{HighLevelData}- higher-level data processed from the complex voltages\\
+\begin{scriptsize}
+\begin{tabular}{|l|l|l|c|p{7cm}|}
+\hline
+\textbf{Name} & \textbf{Size} & \textbf{Type} & \textbf{Units} & \textbf{Description} \\
+\hline
+
+S4 & $(N_{freq}) \times (N_{s4}) \times 2$ & Float64 & & $S_4$ value over time for each frequency and its associated standard error. Denoted as NaN if unavailabe.\\
+SigmaPhi & $(N_{freq}) \times (N_{\sigma \phi}) \times 2$ & Float64 & rad & $\sigma _\phi$ value over time for each frequency and associated standard error. Denoted as NaN if unavailable.\\
+SlantTEC & $(N_{tec}) \times 4 \times 2$ & Float64 & e$^{-}$ / m$^{2}$ & Relative slant-path TEC values and errors for VHF/UHF/L-band, VHF/UHF, VHF/L-band and UHF/L-band in that order. NaN if unavailable.\\
+VerticalTEC & $(N_{tec}) \times 4 \times 2$ & Float64 & TECU & Relative vertical TEC values and errors for VHF/UHF/L-band, VHF/UHF, VHF/L-band and UHF/L-band in that order. NaN if unavailable.\\
+
+\hline
+\end{tabular}
+\end{scriptsize}
+
+\paragraph{Ephemeris}- ephemeris data calculated from the TLE in the file\\
+\begin{scriptsize}
+\begin{tabular}{|l|l|l|c|p{7cm}|}
+\hline
+\textbf{Name} & \textbf{Size} & \textbf{Type} & \textbf{Units} & \textbf{Description} \\
+\hline
+
+Azimuth & $(N_{samp})$ & Float64 & deg & Azimuth of the satellite at a given time\\
+Elevation & $(N_{samp})$ & Float64 & deg & Elevation of the satellite at a given time\\
+Altitude & $(N_{samp})$ & Float64 & m & Sea-level altitude of the satellite at a given time\\
+Range & $(N_{samp})$ & Float64 & m & Range of satellite to observer at a given time\\
+Latitude & $(N_{samp})$ & Float64 & deg & Latitude of the satellite at a given time\\
+Longitude & $(N_{samp})$ & Float64 & deg & Longitude of the satellite at a given time\\
+RelativeVel & $(N_{samp})$ & Float64 & m/s & Relative radial velocity of satellite to observer at a given time\\
+\hline
+\end{tabular}
+\end{scriptsize}
+
+\paragraph{ReceiverConfig}- configuration of receiver for the pass\\
+\begin{scriptsize}
+\begin{tabular}{|l|l|l|c|p{7cm}|}
+\hline
+\textbf{Name} & \textbf{Size} & \textbf{Type} & \textbf{Units} & \textbf{Description} \\
+\hline
+SpectralInversion & 1 & bool && True if the spectrum is inverted, False if it is\\
+AntennaDescription & 1 & String & & Description of antenna used\\
+Latitude & 1 & Float64 & deg & Latitude of receiver\\
+Longitude & 1 & Float64 & deg & Longitude of receiver\\
+Altitude & 1 & Float64 & m & Sea-level altitude of receiver\\
+Temperature & 1 & Float64 & celcius & The temperature at the receiver location\\
+Pressure & 1 & Float64 & millibar & The pressure at the receiver location\\
+Azimuth & 1 & Float64 & deg & Azimuth of direction in which the antenna points\\
+Elevation & 1 & Float64 & deg & Elevation of direction in which the antenna points\\
+\hline
+\end{tabular}
+\end{scriptsize}
+
+\paragraph{} Additionally, the root directory contains a table named \textbf{SoftwareInfo} that details the elements in the processing chain used to create and process the data for the pass.\\
+\begin{scriptsize}
+\begin{tabular}{|l|l|p{7cm}|}
+\hline
+\textbf{Row Name} & \textbf{Type} & \textbf{Description} \\
+\hline
+SoftwareNumber & Int16 & Number designating the position of the software in the chain; a larger number indicates a later position\\
+SoftwareName & String 1000 & Name describing the software\\
+RevisionTag & String 1000 & Revision tag of software\\
+ConfigFile & String 10000 & Configuration file used for the software\\
+\hline
+\end{tabular}
+\end{scriptsize}
+\end{small}
+\end{document}

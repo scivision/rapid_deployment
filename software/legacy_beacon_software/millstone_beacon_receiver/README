@@ -1,0 +1,19 @@
+Millstone Hill Software Radio Beacon Receiver
+
+$Id: README 49 2007-07-03 20:57:57Z flind $
+
+OVERVIEW
+
+This software is a start on a software radio beacon receiver.
+
+INSTALL
+
+Not yet. Just code.
+
+USAGE
+
+The software tool ephemeris_data.py will actually collect data on a DAQ platform. 
+
+python ephemeris_data.py -h
+
+

@@ -1,0 +1,92 @@
+% StartHDF5Spec.tex is a LaTeX file that defines the structure
+% of the output midasw_to_hdf5.py translator of the 
+% MIDAS-M beacon receiver.
+%
+% $Id: StartHDF5Spec.tex 141 2007-08-10 17:56:39Z hguturu $
+
+\documentclass[12pt]{article}
+\begin{document}
+\begin{center}
+\Large{Beacon Receiver Start HDF5 Output File}\\
+\large{(First File, Stage A)}\\
+\large{Damian Ancukiewicz, Harendra Guturu}\\
+\large{Aug 05, 2007}
+\end{center}
+
+\begin{small}
+\paragraph{Description}
+This document specifies the format of the file that the MidasW to HDF5 translator outputs after a satellite flyby. This file is used by the signal processing software to perform the required processing so that it can be passed on for scientific analysis. Additionally, it is stored so that it can be accessed by a separate user interface for scientific or debugging purposes.
+\paragraph{Definitions}
+These dimensions are determined by the data and metadata contained inside the HDF5 file and are not hard-coded.\\
+
+\begin{tabular}{l c p{10cm}}
+$N_{freq}$ &-& Number of distinct frequencies (ex.~VHF, UHF, L-band) that are processed from the same satellite \\
+$N_{samp}$ &-& Number of complex voltage samples present\\
+\end{tabular}
+
+\paragraph{Structure}
+The file is divided into directories, which contain arrays of various types and dimensions. 
+
+\paragraph{Metadata}- contains all necessary metadata for the pass.\\
+\begin{scriptsize}
+\begin{tabular}{|l|l|l|c|p{7cm}|}
+\hline
+\textbf{Name} & \textbf{Size} & \textbf{Type} & \textbf{Units} & \textbf{Description} \\
+\hline
+
+Fsat & $(N_{freq})$ & Float64 & Hz & Defined frequencies of each beacon (disregarding Doppler shift)\\
+Bandwidth & ($N_{freq}$) & Float64 & Hz & Bandwidth of each received signal\\
+StartUTC & 1 & String & & Nanosecond-resolution start time of pass (format: \mbox{YYYYMMDDThhmmss.sssssssssZ} according to ISO 8601) \\
+SampInterval & 1 & Int32 & ns & Sampling interval of voltage signal\\
+TLE & 3 & String & & Name of satellite and both lines of the TLE used to find its ephemeris\\
+\hline
+\end{tabular}
+\end{scriptsize}
+
+\pagebreak
+\paragraph{Data}- mid-level voltage, frequency and SNR data for the acquired signal on each frequency. \\
+\begin{scriptsize}
+\begin{tabular}{|l|l|l|c|p{7cm}|}
+\hline
+\textbf{Name} & \textbf{Size} & \textbf{Type} & \textbf{Units} & \textbf{Description} \\
+\hline
+
+Voltage & $(N_{freq}) \times (N_{samp})$ & Complex128 & V & In-phase and quadrature components of voltage for each frequency. If a sample is unavailable at a given time, it is denoted as NaN.\\
+\hline
+\end{tabular}
+\end{scriptsize}
+
+\paragraph{ReceiverConfig}- configuration of receiver for the pass\\
+\begin{scriptsize}
+\begin{tabular}{|l|l|l|c|p{7cm}|}
+\hline
+\textbf{Name} & \textbf{Size} & \textbf{Type} & \textbf{Units} & \textbf{Description} \\
+\hline
+SpectralInversion & 1 & bool && True if the spectrum is inverted, False if it is\\
+AntennaDescription & 1 & String & & Description of antenna used\\
+Latitude & 1 & Float64 & deg & Latitude of receiver\\
+Longitude & 1 & Float64 & deg & Longitude of receiver\\
+Altitude & 1 & Float64 & m & Sea-level altitude of receiver\\
+Temperature & 1 & Float64 & celcius & The temperature at the receiver location\\
+Pressure & 1 & Float64 & millibar & The pressure at the receiver location\\
+Azimuth & 1 & Float64 & deg & Azimuth of direction in which the antenna points\\
+Elevation & 1 & Float64 & deg & Elevation of direction in which the antenna points\\
+\hline
+\end{tabular}
+\end{scriptsize}
+
+\paragraph{} Additionally, the root directory contains a table named \textbf{SoftwareInfo} that details the elements in the processing chain used to create and process the data for the pass.\\
+\begin{scriptsize}
+\begin{tabular}{|l|l|p{7cm}|}
+\hline
+\textbf{Row Name} & \textbf{Type} & \textbf{Description} \\
+\hline
+SoftwareNumber & Int16 & Number designating the position of the software in the chain; a larger number indicates a later position\\
+SoftwareName & String 1000 & Name describing the software\\
+RevisionTag & String 1000 & Revision tag of software\\
+ConfigFile & String 10000 & Configuration file used for the software\\
+\hline
+\end{tabular}
+\end{scriptsize}
+\end{small}
+\end{document}

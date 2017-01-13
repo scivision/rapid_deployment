@@ -1,0 +1,11 @@
+lag profile matrix python library
+
+$Id: README 3595 2010-04-08 13:37:19Z brideout $
+
+INTRODUCTION
+
+Python wrappers for Lag Profile Matrix computations from lpm C library
+
+QUICK INSTALLATION
+
+python setupLpm.py install

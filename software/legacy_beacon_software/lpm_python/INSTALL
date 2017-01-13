@@ -1,0 +1,16 @@
+lag profile matrix python library
+
+$Id: INSTALL 3595 2010-04-08 13:37:19Z brideout $
+
+Bill Rideout (original code by Tom Grydeland)
+
+MIT Haystack Observatory
+
+INTRODUCTION
+
+Python wrappers for Lag Profile Matrix computations from lpm C library
+
+QUICK INSTALLATION
+
+python setupLpm.py install
+

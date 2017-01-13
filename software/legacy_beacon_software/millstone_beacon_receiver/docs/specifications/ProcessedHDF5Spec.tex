@@ -1,0 +1,122 @@
+% ProcessedHDF5Spec.tex is a LaTeX file that defines the structure
+% of the output of the signal processing stage of the 
+% MIDAS-M beacon receiver.
+%
+% $Id: ProcessedHDF5Spec.tex 141 2007-08-10 17:56:39Z hguturu $
+
+\documentclass[12pt]{article}
+\begin{document}
+\begin{center}
+\Large{Beacon Receiver Processed HDF5 Output File}\\
+\large{(Second File, Stage B)}\\
+\large{Damian Ancukiewicz, Harendra Guturu}\\
+\large{Aug 05, 2007}
+\end{center}
+
+\begin{small}
+\paragraph{Description}
+This document specifies the format of the file that the signal processing
+software outputs once the processing is done. This file is used by a bonder stage to combine
+multiple frequency date into one file for easier high level processing. Additionally, it is stored so that it can be accessed by a separate user interface for scientific or debugging purposes.
+\paragraph{Definitions}
+These dimensions are determined by the data and metadata contained inside the HDF5 file and are not hard-coded.\\
+
+\begin{tabular}{l c p{10cm}}
+$N_{freq}$ &-& Number of distinct frequencies (ex.~VHF, UHF, L-band) that are processed from the same satellite \\
+$N_{samp}$ &-& Number of complex voltage samples present\\
+$N_{out}$ &-& Number of output frequency points and their corresponding snr, lock, deviation and error points present\\
+\end{tabular}
+
+\paragraph{Structure}
+The file is divided into directories, which contain arrays of various types and dimensions. 
+
+\paragraph{Metadata}- contains all necessary metadata for the pass.\\
+\begin{scriptsize}
+\begin{tabular}{|l|l|l|c|p{7cm}|}
+\hline
+\textbf{Name} & \textbf{Size} & \textbf{Type} & \textbf{Units} & \textbf{Description} \\
+\hline
+
+Fsat & $(N_{freq})$ & Float64 & Hz & Defined frequencies of each beacon (disregarding Doppler shift)\\
+Bandwidth & ($N_{freq}$) & Float64 & Hz & Bandwidth of each received signal\\
+StartUTC & 1 & String & & Nanosecond-resolution start time of pass (format: \mbox{YYYYMMDDThhmmss.sssssssssZ} according to ISO 8601) \\
+SampInterval & 1 & Int32 & ns & Sampling interval of voltage signal\\
+OutInterval & 1 & Int32 & ns & Measurement interval of signal-to-noise ratio, frequency values, their deviation, error and lock. Must be an integral multiple of SampInterval.\\
+TLE & 3 & String & & Name of satellite and both lines of the TLE used to find its ephemeris\\
+\hline
+\end{tabular}
+\end{scriptsize}
+
+\pagebreak
+\paragraph{Data}- mid-level voltage, frequency and SNR data for the acquired signal on each frequency. \\
+\begin{scriptsize}
+\begin{tabular}{|l|l|l|c|p{7cm}|}
+\hline
+\textbf{Name} & \textbf{Size} & \textbf{Type} & \textbf{Units} & \textbf{Description} \\
+\hline
+
+Voltage & $(N_{freq}) \times (N_{samp})$ & Complex128 & V & In-phase and quadrature components of voltage for each frequency. If a sample is unavailable at a given time, it is denoted as NaN.\\
+SNR & $(N_{freq}) \times (N_{out})$ & Float64 & dB & Signal-to-noise ratio for each frequency. Denoted as NaN if unavailable.\\
+Frequency & $(N_{freq}) \times (N_{out})$ & Float64 & Hz & Actual frequency at which the signal was found at. Denoted as NaN if unavailabe.\\
+Lock & $(N_{freq}) \times (N_{out})$ & Bool & T/F & Each sample value for each frequency will have a value that will be a true or false indicating if the signal had lock. If data
+frequency data is unavailable then the lock value will default to false.\\
+Deviation & $(N_{freq}) \times (N_{out})$ & Float64 & Hz & The deviation from the detected frequency and the frequency from the ephem calculator. If it is too high, lock is lost.
+Denoted as NaN if unavailable.\\
+Error & $(N_{freq}) \times (N_{out})$ & Float64 & Hz & The error of the frequency due to error propagation in the function. Error = $\frac{dy}{dx}\Delta{x}$. Denoted by NaN if
+unavailable.\\
+\hline
+\end{tabular}
+\end{scriptsize}
+
+\paragraph{Ephemeris}- ephemeris data calculated from the TLE in the file\\
+\begin{scriptsize}
+\begin{tabular}{|l|l|l|c|p{7cm}|}
+\hline
+\textbf{Name} & \textbf{Size} & \textbf{Type} & \textbf{Units} & \textbf{Description} \\
+\hline
+
+Azimuth & $(N_{samp})$ & Float64 & deg & Azimuth of the satellite at a given time\\
+Elevation & $(N_{samp})$ & Float64 & deg & Elevation of the satellite at a given time\\
+Altitude & $(N_{samp})$ & Float64 & m & Sea-level altitude of the satellite at a given time\\
+Range & $(N_{samp})$ & Float64 & m & Range of satellite to observer at a given time\\
+Latitude & $(N_{samp})$ & Float64 & deg & Latitude of the satellite at a given time\\
+Longitude & $(N_{samp})$ & Float64 & deg & Longitude of the satellite at a given time\\
+RelativeVel & $(N_{samp})$ & Float64 & m/s & Relative radial velocity of satellite to observer at a given time\\
+\hline
+\end{tabular}
+\end{scriptsize}
+
+\paragraph{ReceiverConfig}- configuration of receiver for the pass\\
+\begin{scriptsize}
+\begin{tabular}{|l|l|l|c|p{7cm}|}
+\hline
+\textbf{Name} & \textbf{Size} & \textbf{Type} & \textbf{Units} & \textbf{Description} \\
+\hline
+SpectralInversion & 1 & bool && True if the spectrum is inverted, False if it is\\
+AntennaDescription & 1 & String & & Description of antenna used\\
+Latitude & 1 & Float64 & deg & Latitude of receiver\\
+Longitude & 1 & Float64 & deg & Longitude of receiver\\
+Altitude & 1 & Float64 & m & Sea-level altitude of receiver\\
+Temperature & 1 & Float64 & celcius & The temperature at the receiver location\\
+Pressure & 1 & Float64 & millibar & The pressure at the receiver location\\
+Azimuth & 1 & Float64 & deg & Azimuth of direction in which the antenna points\\
+Elevation & 1 & Float64 & deg & Elevation of direction in which the antenna points\\
+\hline
+\end{tabular}
+\end{scriptsize}
+
+\paragraph{} Additionally, the root directory contains a table named \textbf{SoftwareInfo} that details the elements in the processing chain used to create and process the data for the pass.\\
+\begin{scriptsize}
+\begin{tabular}{|l|l|p{7cm}|}
+\hline
+\textbf{Row Name} & \textbf{Type} & \textbf{Description} \\
+\hline
+SoftwareNumber & Int16 & Number designating the position of the software in the chain; a larger number indicates a later position\\
+SoftwareName & String 1000 & Name describing the software\\
+RevisionTag & String 1000 & Revision tag of software\\
+ConfigFile & String 10000 & Configuration file used for the software\\
+\hline
+\end{tabular}
+\end{scriptsize}
+\end{small}
+\end{document}

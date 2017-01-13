@@ -1,0 +1,2 @@
+include src/unit_tests/*.py
+include INSTALL
