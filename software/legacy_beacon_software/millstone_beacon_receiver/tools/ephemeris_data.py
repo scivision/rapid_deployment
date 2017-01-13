@@ -195,7 +195,7 @@ def max_satellite_bandwidth(opt, obsLat, obsLong, obsElev, objName, tle1, tle2, 
         tle2 (string)                    = Second line of TLE
         startDate (string or ephem.date) = The date/time at which to find the first cycle
         endDate (string or ephem.date)   = The date/time at which to stop looking for a cycle
-        interval (string)                = The rate at which to sample during one rise/set cycle same format
+        interval (float)                = The rate at which to sample during one rise/set cycle same format
                                            as time
         beaconFreq (float)               = The frequency of the beacon
 
@@ -236,7 +236,7 @@ def satellite_bandwidth(opt, obsLat, obsLong, obsElev, objName, tle1, tle2, satR
         tle2 (string)                    = Second line of TLE
         satRise (string or ephem.date)  = The time at which the satellite rises above horizon
         satSet (string or ephem.date)   = The time at which the satellite sets
-        interval (string)                = The rate at which to sample during one rise/set cycle in seconds
+        interval (float)                = The rate at which to sample during one rise/set cycle in seconds
         beaconFreq (float)               = The frequency of the beacon
 
     RETURNS:
@@ -687,12 +687,12 @@ def parse_command_line():
                       dest="debug", default=False,help="run in debug mode and not service context.")
     parser.add_option("-b", "--bash",action="store_true",
                       dest="schedule", default=False,help="create schedule file for bash shell based command / control.")
-    parser.add_option("-m","--mask",dest="el_mask",default=0.0,help="mask all passes below the provided elevation.")
+    parser.add_option("-m","--mask",dest="el_mask",type=float,default=0.0,help="mask all passes below the provided elevation.")
     parser.add_option("-c", "--config",dest="config",default='beacons.ini',help="Use configuration file <config>.")
     parser.add_option("-f", "--foreground",action="store_true",dest="foreground",help="Execute schedule in foreground.")
     parser.add_option("-s", "--starttime",dest="starttime",help="Start time in ISO8601 format, e.g. 2016-01-01T15:24:00Z")
     parser.add_option("-e", "--endtime",dest="endtime",help="End time in ISO8601 format, e.g. 2016-01-01T16:24:00Z")
-    parser.add_option("-i", "--interval",dest="interval",default=10.0,help="Sampling interval for ephemeris predictions, default is 10 seconds.")
+    parser.add_option("-i", "--interval",dest="interval",type=float,default=10.0,help="Sampling interval for ephemeris predictions, default is 10 seconds.")
     parser.add_option("-r", "--radio",dest="site",default='site.ini',help="Radio site configuration file.")
 
     (options, args) = parser.parse_args()
