@@ -1,0 +1,63 @@
+miniconda install instructions
+******************************
+
+# download and install the miniconda package
+wget https://repo.continuum.io/miniconda/Miniconda-latest-Linux-x86_64.sh
+# (select any location to install, default ~/miniconda2, but DO NOT let it prepend to PATH)
+bash Miniconda-latest-Linux-x86_64.sh
+rm Miniconda-latest-Linux-x86_64.sh
+
+
+vex install instructions
+************************
+
+# start with pip installed
+# then use pip to install vex locally
+pip install --user vex
+
+# edit .profile so that $HOME/.local/bin is on $PATH
+# by adding the line 'PATH="$PATH:$HOME/.local/bin"'
+echo $'# add .local/bin to path\nPATH="$PATH:$HOME/.local/bin"' >> .profile
+
+# create .vexrc to point to environment path
+# (environment path for miniconda is MINICONDA_HOME/envs)
+echo $'shell=bash\nvirtualenvs=~/miniconda2/envs' >> .vexrc
+
+# add the following between ==><== to .bashrc:
+==>
+# append vex virtual environment before prompt
+function virtualenv_prompt() {
+    if [ -n "$VIRTUAL_ENV" ]; then
+        virtualenv=`basename "$VIRTUAL_ENV"`
+        echo -n "${virtualenv:+$virtualenv }"
+    fi
+}
+export PS1="\[\e[01;31m\]\$(virtualenv_prompt)\[\e[m\]$PS1"
+
+# set conda default environment when $VIRTUAL_ENV is set
+# Anaconda issue #32: workaround to set QT_PLUGIN_PATH to empty string so systems libs aren't used
+if [ -n "$VIRTUAL_ENV" ]; then
+    export CONDA_DEFAULT_ENV="$VIRTUAL_ENV"
+    export QT_PLUGIN_PATH=""
+fi
+
+# enable vex autocomplete
+eval "$(~/.local/bin/vex --shell-config bash)"
+<==
+
+
+how to use vex and miniconda
+****************************
+
+# first, you can enter the base miniconda environment using the command:
+vex --path ~/miniconda2
+
+# then you can create a default conda environment named 'py2' using the command
+conda create -n py2 python
+
+# with an environment created, we can exit the base environment
+exit
+# and enter the new environment with vex:
+vex py2
+
+# now just 'conda install' or 'pip install' packages to your heart's content!
