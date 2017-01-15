@@ -7,13 +7,14 @@ import os
 from argparse import ArgumentParser
 
 parser = ArgumentParser()
-parser.add_argument('dir', nargs=1)
-parser.add_argument('-r', dest='sample_rate', default=10e6)
+parser.add_argument('dir')
+parser.add_argument('-r', dest='sample_rate', default='10e6')
 parser.add_argument('-c', dest='channels', default='cha,chb')
 parser.add_argument('-d', dest='devices', default="\"A:RX1 A:RX2\"")
-parser.add_argument('--f-start', dest='start_freq', default=50e6)
-parser.add_argument('--f-end', dest='end_freq', default=860e6)
-parser.add_argument('-i', dest='interval', default=4e6)
+parser.add_argument('--f-start', dest='start_freq', default='50e6')
+parser.add_argument('--f-end', dest='end_freq', default='860e6')
+parser.add_argument('-i', dest='interval', default='5e6')
+parser.add_argument('-g', dest='gain', default='0')
 
 op = parser.parse_args()
 
@@ -25,15 +26,19 @@ thorcommand = "thor3.py"
 #channels = "cha,chb"
 #devices = "\"A:RX1 A:RX2\""
 
-center_freq = op.start_freq
-while center_freq <= op.end_freq:
-    now = datetime.utcnow()
-    starttime = (now + timedelta(seconds=5)).isoformat()
-    endtime = (now + timedelta(seconds=15)).isoformat()
-    bash_command = [thorcommand, '-c', op.channels, '-d', op.devices, '-f', center_freq, '-g', 0, '-r', op.sample_rate, '-s', starttime, '-e', endtime, op.dir].join(' ')
-    #os.system(bash_command)
+center_freq = eval(op.start_freq)
+interval = eval(op.interval)
+while center_freq <= eval(op.end_freq):
+    now = datetime.datetime.utcnow()
+    now = now.replace(microsecond=0)
+    starttime = (now + datetime.timedelta(seconds=10)).isoformat() + 'Z'
+    endtime = (now + datetime.timedelta(seconds=20)).isoformat() + 'Z'
+    bash_command = ' '.join([thorcommand, '-c', op.channels, '-d', op.devices, '-f', str(center_freq), '-g', op.gain, '-r', op.sample_rate, '-s', starttime, '-e', endtime, op.dir])
     print bash_command
+    ret = os.system(bash_command)
+    if ret:
+        raise RuntimeError('thor3.py exited with non-zero status')
     center_freq += interval
-    time.sleep(20)
+    #time.sleep(20)
 
 
