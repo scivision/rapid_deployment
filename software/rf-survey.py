@@ -36,9 +36,8 @@ while center_freq <= eval(op.end_freq):
     bash_command = ' '.join([thorcommand, '-c', op.channels, '-d', op.devices, '-f', str(center_freq), '-g', op.gain, '-r', op.sample_rate, '-s', starttime, '-e', endtime, op.dir])
     print bash_command
     ret = os.system(bash_command)
-    if ret:
-        raise RuntimeError('thor3.py exited with non-zero status')
+    # 34304 special case for when boost throws an exception when end time
+    # termination happens normally
+    if ret != 0 and ret != 34304:
+        raise RuntimeError('thor3.py exited with non-zero status: {0}'.format(ret))
     center_freq += interval
-    #time.sleep(20)
-
-
