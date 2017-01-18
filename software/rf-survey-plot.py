@@ -1,14 +1,15 @@
 from argparse import ArgumentParser
 import os
 import digital_metadata as dmd
+import datetime
 
 plot_opts = {
-'specgram': {'dynamic_range': ,'use_log': True, 'bins': 512},
-'spectrum', {'dynamic_range': ,'use_log': True, 'bins': 512},
-'voltage': {'dynamic_range': ,'use_log': True},
-'phase': {'dynamic_range': ,'use_log': True},
-'iq': {'dynamic_range': ,'use_log': True},
-'histogram': {'dynamic_range': ,'use_log': True, 'bins': 512},
+'specgram': {'use_log': True, 'bins': '1024'},
+'spectrum': {'use_log': True, 'bins': '1024'},
+'voltage': {},
+'phase': {'bins': '128', 'use_log': True},
+'iq': {},
+'histogram': {'use_log': True, 'bins': '128'}
 }
 
 chans = ['cha','chb']
@@ -16,47 +17,54 @@ chans = ['cha','chb']
 parser = ArgumentParser()
 parser.add_argument('dir')
 parser.add_argument('-t', dest='plot_time', default='1000')
-
+parser.add_argument('-s', dest='save_dir', default='')
 args = parser.parse_args()
 
-mdf = dmd.read_digital_metadata(args.dir + '/' + chan + '/metadata')
+#plot_cmd = '~/midasmicro/digital_rf/drf_plot.py'
+plot_cmd = 'python drf_plot.py'
+i = 0
+for chan in chans:
+    chan_string = chan + ':0'
+    mdf = dmd.read_digital_metadata(args.dir + '/' + chan + '/metadata')
 
-mdbounds = mdf.get_bounds()
-#print mdbounds
+    mdbounds = mdf.get_bounds()
+    #print mdbounds
 
-#need to get sample rate to interpret bounds
-latest = mdf.read_latest()
-latest_md = latest[latest.keys()[0]]
-sfreq = latest_md['sample_rate'][0]
+    #need to get sample rate to interpret bounds
+    latest = mdf.read_latest()
+    latest_md = latest[latest.keys()[0]]
+    sfreq = latest_md['sample_rate']
 
-mdt = mdf.read(mdbounds[0],mdbounds[1])
+    mdt = mdf.read(mdbounds[0],mdbounds[1])
+    times = mdt.keys()
 
-plot_cmd = '/midasmicro/digital_rf/drf_plot.py'
-times = mdt.keys()
+    for time in times:
+        #print time
+        start_time = datetime.datetime.utcfromtimestamp(time/sfreq)
+        start_time_string = start_time.isoformat() + 'Z'
+        md = mdt[time]
+        cfreq = int(md['center_frequencies'].tolist()[0][0])
 
-for time in times:
-    start_time = datetime.datetime.utcfromtimestamp(time)
-    start_time_string = start_time.isoformat() + 'Z'
-    md = mdt[time]
-    cfreq = md['center_frequencies'][0]    
-
-    num_samples = sfreq*args.plot_time/1000
-    sample_range = '0:' + str(num_samples)
-    for plot_type in plot_types:
-        opts = plot_opts[plot_type]
-        for chan in chans:
-            channel = chan + ':0'
-            command_line = [plot_cmd, '-i', args.dir, '-r', sample_range, \
-'-c', channel, '-a', start_time_string, '-t', title].join(' ')
+        num_samples = int(sfreq*int(args.plot_time)/1000)
+        sample_range = '0:{:d}'.format(num_samples)
+        for plot_type in plot_opts.keys():
+            opts = plot_opts[plot_type]
+            command_line = ' '.join([plot_cmd, '-i', args.dir, '-t', plot_type, '-r', \
+sample_range, '-c', chan_string, '-a', start_time_string])
             
-            if opts.use_log:
+            if 'use_log' in opts.keys() and opts['use_log']:
                 command_line += ' -l'
             if 'dynamic_range' in opts.keys():
-                command_line += ' -z ' + dynamic_range
+                command_line += ' -z ' + opts['dynamic_range']
             if 'num_bins' in opts.keys():
-                command_line += ' -b ' + num_bins
+                command_line += ' -b ' + opts['num_bins']
+            if args.save_dir != "":
+                fname = '_'.join([plot_type,chan,str(cfreq)])
+                command_line += ' --save ' + args.save_dir + '/' + fname + '.png'
             print command_line
             rtn = 0
-            #rtn = os.system(command_line)
+            i += 1
+            if i < 10:
+                rtn = os.system(command_line)
             if rtn:
                 raise RuntimeError('drf-plot exited with non-zero status')
