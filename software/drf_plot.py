@@ -28,6 +28,8 @@ import matplotlib.pylab
 import digital_rf_hdf5
 import digital_metadata as dmd
 
+import pandas as pd
+import xarray as xr
 
 def voltage_process(data, sfreq, toffset, modulus, integration, log_scale, title):
     """ Break voltages by modulus and display each block. Integration here acts
@@ -470,7 +472,7 @@ def specgram_plot(data, extent, log_scale, zscale, title):
     vmin = zscale_low
     vmax = zscale_high
 
-    matplotlib.pylab.imshow(Pss, cmap=matplotlib.cm.jet, origin='upper', extent=extent, interpolation='nearest', vmin=vmin, vmax=vmax, aspect='auto')
+    matplotlib.pylab.imshow(Pss, cmap=matplotlib.cm.jet, origin='lower', extent=extent, interpolation='nearest', vmin=vmin, vmax=vmax, aspect='auto')
     matplotlib.pylab.colorbar()
     matplotlib.pylab.xlabel('time (seconds)')
     matplotlib.pylab.ylabel('frequency (MHz)', fontsize=12)
@@ -865,7 +867,7 @@ if __name__ == "__main__":
 
     # parse the command line arguments
     try:
-        opts, args = getopt.getopt(sys.argv[1:], 'hi:p:c:o:r:b:z:m:t:a:ld')
+        opts, args = getopt.getopt(sys.argv[1:], 'hi:p:c:o:r:b:z:m:t:a:ld:s:')
     except:
         usage()
         sys.exit()
@@ -878,7 +880,7 @@ if __name__ == "__main__":
         elif opt in ('-i'):
             input_files.append(val)
         elif opt in ('-s'):
-            sfreq = float(val)
+            plot_file = val
         elif opt in ('-p'):
             plot_type = val
         elif opt in ('-c'):
@@ -931,9 +933,6 @@ if __name__ == "__main__":
             cl,bl = string.split(val,':')
             msl_code_length = int(cl)
             msl_baud_length = int(bl)
-        elif opt in '--save':
-            plot_file = val
-
 
     for f in input_files:
         print("file %s" % f)
@@ -956,17 +955,12 @@ if __name__ == "__main__":
 	    
             mdf = dmd.read_digital_metadata(f + '/' + chans[chidx] + '/metadata')
             mdstart = mdf.get_bounds()
-            # print mdf
-            # print mdstart 
 
             # Note this could be more intelligent. Assumes no changes.
-	    mdt = mdf.read_latest()
+	    #mdt = mdf.read_latest()
             # print mdt
-            md = mdt[mdt.keys()[0]]
-
-            sfreq = md['sample_rate']
-            cfreq = md['center_frequencies'][0]
-
+            #md = mdt[mdt.keys()[0]]
+            sfreq = drf.get_rf_file_metadata(chans[chidx])["samples_per_second"].tolist()[0]
             toffset = start_sample
 
             print toffset
@@ -980,11 +974,19 @@ if __name__ == "__main__":
             dlen = stop_sample - start_sample + 1
 
             print sstart, dlen
+            md_dict = mdf.read(mdstart[0],mdstart[1])
+            #print md_dict
+            md_df = pd.DataFrame.from_dict(md_dict, orient='index')
+            #print md_df
+            df_idx = md_df.index
+            df_loc = df_idx.get_loc(sstart,method='ffill')
+            metadata = md_df.iloc[df_loc]
+            #print metadata
+            cfreq = metadata['center_frequencies'][0]
 
             d = drf.read_vector(sstart, dlen, chans[chidx])
 
             d = d[:,subchan]
-
             print d.shape
 
             print "d", d[0:10]
@@ -1041,6 +1043,7 @@ if __name__ == "__main__":
                 save_plot = False
             
             if save_plot:
+                print 'saving plot'
                 matplotlib.pylab.savefig(plot_file)
         except:
             traceback.print_exc(file=sys.stdout)
