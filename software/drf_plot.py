@@ -1007,6 +1007,9 @@ if __name__ == "__main__":
 
         save_plot = False
         if plot_file != "":
+            path_head,_ = os.path.split(plot_file)
+            if not os.path.isdir(path_head):
+                os.makedirs(path_head)
             save_plot = True
         print "generating plot"
 
