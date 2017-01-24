@@ -534,6 +534,7 @@ def ephemeris_passes(opt, st0, et0):
                         cmd_fname = '%s_%s_%s_%dMHz' % (site_tag, obj_id, rise_time, int(freq/1.0e6))
 
                         cmd_line2 = " -g %s -m %s --devargs num_recv_frames=1024 --devargs master_clock_rate=24.0e6 -o %s/%s" % (radio_gain[idx],radio_address[idx],site['recorder']['data_path'],cmd_fname)
+                        cmd_line2 += ' {0}'.format(site['radio'].get('extra_args', '')).rstrip()
 
                         if not opt.foreground:
                             cmd_line0 = 'nohup ' + cmd_line0
@@ -550,23 +551,24 @@ def ephemeris_passes(opt, st0, et0):
 
                     elif site['radio']['type'] == 'n200_tvrx2':
 
-                            cmd_line1 = " -r %s -d \"%s %s\" -s %s -e %s -c %s,%s -f %4.3f,%4.3f " % (radio_sample_rate,radio_channel[0],radio_channel[1],offset_rise_time, offset_set_time,recorder_channels[0],recorder_channels[1],obj_freqs[0],obj_freqs[1])
+                        cmd_line1 = " -r %s -d \"%s %s\" -s %s -e %s -c %s,%s -f %4.3f,%4.3f " % (radio_sample_rate,radio_channel[0],radio_channel[1],offset_rise_time, offset_set_time,recorder_channels[0],recorder_channels[1],obj_freqs[0],obj_freqs[1])
 
-                            log_file_name = "%s_%s_%s_combined.log" % (site_tag,obj_id,offset_rise_time)
-                            cmd_fname = '%s_%s_%s_combined' % (site_tag, obj_id, rise_time)
+                        log_file_name = "%s_%s_%s_combined.log" % (site_tag,obj_id,offset_rise_time)
+                        cmd_fname = '%s_%s_%s_combined' % (site_tag, obj_id, rise_time)
 
-                            cmd_line2 = " -g %s,%s -m %s -o %s/%s" % (radio_gain[0],radio_gain[1],radio_address[0],site['recorder']['data_path'],cmd_fname)
+                        cmd_line2 = " -g %s,%s -m %s -o %s/%s" % (radio_gain[0],radio_gain[1],radio_address[0],site['recorder']['data_path'],cmd_fname)
+                        cmd_line2 += ' {0}'.format(site['radio'].get('extra_args', '')).rstrip()
 
-                            if not opt.foreground:
-                                cmd_line0 = 'nohup ' + cmd_line0
-                                cmd_line2 = cmd_line2 + ' 2>&1 &'
-                            else:
-                                cmd_line2 = cmd_line2
+                        if not opt.foreground:
+                            cmd_line0 = 'nohup ' + cmd_line0
+                            cmd_line2 = cmd_line2 + ' 2>&1 &'
+                        else:
+                            cmd_line2 = cmd_line2
 
-                            if opt.debug:
-                                print cmd_line0, cmd_line1, cmd_line2, cmd_fname
+                        if opt.debug:
+                            print cmd_line0, cmd_line1, cmd_line2, cmd_fname
 
-                            cmd_lines.append((cmd_line0 + cmd_line1 + cmd_line2, cmd_fname, pass_md, obj_info))
+                        cmd_lines.append((cmd_line0 + cmd_line1 + cmd_line2, cmd_fname, pass_md, obj_info))
 
                 print "\n"
 
@@ -688,12 +690,12 @@ def parse_command_line():
     parser.add_option("-b", "--bash",action="store_true",
                       dest="schedule", default=False,help="create schedule file for bash shell based command / control.")
     parser.add_option("-m","--mask",dest="el_mask",type=float,default=0.0,help="mask all passes below the provided elevation.")
-    parser.add_option("-c", "--config",dest="config",default='../config/beacons.ini',help="Use configuration file <config>.")
+    parser.add_option("-c", "--config",dest="config",default='beacons.ini',help="Use configuration file <config>.")
     parser.add_option("-f", "--foreground",action="store_true",dest="foreground",help="Execute schedule in foreground.")
     parser.add_option("-s", "--starttime",dest="starttime",help="Start time in ISO8601 format, e.g. 2016-01-01T15:24:00Z")
     parser.add_option("-e", "--endtime",dest="endtime",help="End time in ISO8601 format, e.g. 2016-01-01T16:24:00Z")
     parser.add_option("-i", "--interval",dest="interval",type=float,default=10.0,help="Sampling interval for ephemeris predictions, default is 10 seconds.")
-    parser.add_option("-r", "--radio",dest="site",default='../config/site.ini',help="Radio site configuration file.")
+    parser.add_option("-r", "--radio",dest="site",default='site.ini',help="Radio site configuration file.")
 
     (options, args) = parser.parse_args()
 
